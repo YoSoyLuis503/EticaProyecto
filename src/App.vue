@@ -1,143 +1,195 @@
 <script setup>
 import { computed, ref, shallowRef, watch } from 'vue'
-import TopBar from './components/TopBar.vue'
-import WelcomeScreen from './components/WelcomeScreen.vue'
-import LevelMap from './components/LevelMap.vue'
-import Level1Playtime from './components/levels/Level1Playtime.vue'
-import Level2SharePark from './components/levels/Level2SharePark.vue'
-import Level3Tiredness from './components/levels/Level3Tiredness.vue'
-import Level4PajamaRoute from './components/levels/Level4PajamaRoute.vue'
-import Level5StarDream from './components/levels/Level5StarDream.vue'
+import TopNavHud from './components/TopNavHud.vue'
+import WelcomeValley from './components/WelcomeValley.vue'
+import ValleyMap from './components/ValleyMap.vue'
+import SleepAlbumModal from './components/SleepAlbumModal.vue'
+import CabinDecoratorModal from './components/CabinDecoratorModal.vue'
+import Level1SafeRefuge from './components/levels/Level1SafeRefuge.vue'
+import Level2EnergyKitchen from './components/levels/Level2EnergyKitchen.vue'
+import Level3RecessPuzzle from './components/levels/Level3RecessPuzzle.vue'
+import Level4StarRitual from './components/levels/Level4StarRitual.vue'
+import Level5LumiDream from './components/levels/Level5LumiDream.vue'
+import { CABIN_STICKERS, SLEEP_POSES, VALLEY_LEVELS } from './data/valleyData'
 import { isMuted, playSound, stopSpeaking, toggleMute } from './utils/sound'
 
-const STORAGE_KEY = 'campamento_suenos_v1'
+const STORAGE_KEY = 'guardianes_valle_v1'
 
-function loadSavedState() {
+function loadProgress() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { levelStars: {}, demoUnlocked: false }
+    if (!raw) {
+      return {
+        completedLevels: [],
+        unlockedPoses: [],
+        unlockedStickers: [],
+        placedStickers: [],
+        demoUnlocked: false,
+      }
+    }
     const parsed = JSON.parse(raw)
     return {
-      levelStars: parsed.levelStars || {},
+      completedLevels: Array.isArray(parsed.completedLevels) ? parsed.completedLevels : [],
+      unlockedPoses: Array.isArray(parsed.unlockedPoses) ? parsed.unlockedPoses : [],
+      unlockedStickers: Array.isArray(parsed.unlockedStickers) ? parsed.unlockedStickers : [],
+      placedStickers: Array.isArray(parsed.placedStickers) ? parsed.placedStickers : [],
       demoUnlocked: Boolean(parsed.demoUnlocked),
     }
   } catch {
-    return { levelStars: {}, demoUnlocked: false }
+    return {
+      completedLevels: [],
+      unlockedPoses: [],
+      unlockedStickers: [],
+      placedStickers: [],
+      demoUnlocked: false,
+    }
   }
 }
 
-const saved = loadSavedState()
+const initial = loadProgress()
 const currentScreen = shallowRef('welcome')
-const levelStars = ref(saved.levelStars)
-const demoUnlocked = shallowRef(saved.demoUnlocked)
-
-const completedLevels = computed(() =>
-  Object.keys(levelStars.value).map(Number),
-)
-
-const totalStars = computed(() =>
-  Object.values(levelStars.value).reduce((sum, s) => sum + s, 0),
-)
+const showAlbum = shallowRef(false)
+const showCabin = shallowRef(false)
+const completedLevels = ref(initial.completedLevels)
+const unlockedPoses = ref(initial.unlockedPoses)
+const unlockedStickers = ref(initial.unlockedStickers)
+const placedStickers = ref(initial.placedStickers)
+const demoUnlocked = shallowRef(initial.demoUnlocked)
 
 const LEVEL_COMPONENTS = {
-  level1: Level1Playtime,
-  level2: Level2SharePark,
-  level3: Level3Tiredness,
-  level4: Level4PajamaRoute,
-  level5: Level5StarDream,
+  level1: Level1SafeRefuge,
+  level2: Level2EnergyKitchen,
+  level3: Level3RecessPuzzle,
+  level4: Level4StarRitual,
+  level5: Level5LumiDream,
 }
 
 const activeLevelComponent = computed(() => LEVEL_COMPONENTS[currentScreen.value] || null)
 
+const effectivePoses = computed(() =>
+  demoUnlocked.value ? SLEEP_POSES.map((p) => p.id) : unlockedPoses.value,
+)
+
+const effectiveStickers = computed(() =>
+  demoUnlocked.value ? CABIN_STICKERS.map((s) => s.id) : unlockedStickers.value,
+)
+
 const backgroundClass = computed(() => {
-  if (currentScreen.value === 'level5') {
+  if (currentScreen.value === 'level4' || currentScreen.value === 'level5') {
     return 'bg-gradient-to-b from-indigo-950 via-purple-950 to-slate-950'
   }
-  if (currentScreen.value === 'level4') {
-    return 'bg-gradient-to-b from-amber-100 via-violet-100 to-sky-100'
-  }
-  return 'bg-gradient-to-b from-sky-200 via-camp-sky to-amber-100'
+  return 'bg-gradient-to-b from-[#EAF6EF] via-valley-cream to-[#F2E8CF]'
 })
 
-function persistState() {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        levelStars: levelStars.value,
-        demoUnlocked: demoUnlocked.value,
-      }),
-    )
-  } catch {
-    // Storage unavailable in private contexts; continue in memory
-  }
-}
+watch(
+  [completedLevels, unlockedPoses, unlockedStickers, placedStickers, demoUnlocked],
+  () => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          completedLevels: completedLevels.value,
+          unlockedPoses: unlockedPoses.value,
+          unlockedStickers: unlockedStickers.value,
+          placedStickers: placedStickers.value,
+          demoUnlocked: demoUnlocked.value,
+        }),
+      )
+    } catch {
+      // Storage unavailable; continue in memory
+    }
+  },
+  { deep: true },
+)
 
-watch([levelStars, demoUnlocked], persistState, { deep: true })
-
-function goToScreen(screen) {
+function navigate(screen) {
   stopSpeaking()
   currentScreen.value = screen
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function handleLevelComplete({ levelId, stars }) {
-  const prev = levelStars.value[levelId] || 0
-  levelStars.value = {
-    ...levelStars.value,
-    [levelId]: Math.max(prev, stars),
+function handleLevelComplete({ levelId, poseId, stickerId }) {
+  if (!completedLevels.value.includes(levelId)) {
+    completedLevels.value = [...completedLevels.value, levelId]
+  }
+  if (!unlockedPoses.value.includes(poseId)) {
+    unlockedPoses.value = [...unlockedPoses.value, poseId]
+  }
+  if (!unlockedStickers.value.includes(stickerId)) {
+    unlockedStickers.value = [...unlockedStickers.value, stickerId]
+  }
+  if (!placedStickers.value.includes(stickerId)) {
+    placedStickers.value = [...placedStickers.value, stickerId]
+  }
+}
+
+function toggleCabinSticker(stickerId) {
+  if (placedStickers.value.includes(stickerId)) {
+    placedStickers.value = placedStickers.value.filter((id) => id !== stickerId)
+  } else {
+    placedStickers.value = [...placedStickers.value, stickerId]
   }
 }
 
 function goToNextLevel() {
-  const currentNum = Number(currentScreen.value.replace('level', ''))
-  if (currentNum >= 1 && currentNum < 5) {
-    goToScreen(`level${currentNum + 1}`)
+  const num = Number(currentScreen.value.replace('level', ''))
+  if (num >= 1 && num < VALLEY_LEVELS.length) {
+    navigate(`level${num + 1}`)
     return
   }
-  goToScreen('map')
+  navigate('map')
 }
 
 function toggleDemoMode() {
   playSound('pop')
   demoUnlocked.value = !demoUnlocked.value
+  if (demoUnlocked.value && placedStickers.value.length === 0) {
+    placedStickers.value = CABIN_STICKERS.map((s) => s.id)
+  }
 }
 
 function resetProgress() {
   playSound('pop')
-  levelStars.value = {}
+  completedLevels.value = []
+  unlockedPoses.value = []
+  unlockedStickers.value = []
+  placedStickers.value = []
   demoUnlocked.value = false
-  goToScreen('map')
+  navigate('map')
 }
 </script>
 
 <template>
   <div :class="backgroundClass" class="min-h-screen flex flex-col transition-colors duration-700">
-    <TopBar
+    <TopNavHud
       :current-screen="currentScreen"
-      :stars="totalStars"
       :completed-levels="completedLevels"
+      :unlocked-poses="effectivePoses"
+      :unlocked-stickers="effectiveStickers"
       :is-muted="isMuted"
       :demo-unlocked="demoUnlocked"
-      @go-home="goToScreen('welcome')"
-      @go-map="goToScreen('map')"
+      @navigate="navigate"
+      @open-album="playSound('pop'); showAlbum = true"
+      @open-cabin="playSound('pop'); showCabin = true"
       @toggle-mute="toggleMute"
-      @unlock-all="toggleDemoMode"
+      @toggle-demo="toggleDemoMode"
       @reset-progress="resetProgress"
     />
 
     <main class="flex-1 w-full pb-12">
-      <WelcomeScreen
+      <WelcomeValley
         v-if="currentScreen === 'welcome'"
-        @start="goToScreen('map')"
+        @start="navigate('map')"
+        @open-album="showAlbum = true"
+        @open-cabin="showCabin = true"
       />
 
-      <LevelMap
+      <ValleyMap
         v-else-if="currentScreen === 'map'"
         :completed-levels="completedLevels"
-        :level-stars="levelStars"
+        :unlocked-poses="effectivePoses"
         :demo-unlocked="demoUnlocked"
-        @select-level="goToScreen"
+        @select-level="navigate"
       />
 
       <component
@@ -146,8 +198,23 @@ function resetProgress() {
         :key="currentScreen"
         @complete="handleLevelComplete"
         @next-level="goToNextLevel"
-        @go-map="goToScreen('map')"
+        @go-map="navigate('map')"
+        @open-album="showAlbum = true"
       />
     </main>
+
+    <SleepAlbumModal
+      :show="showAlbum"
+      :unlocked-poses="effectivePoses"
+      @close="showAlbum = false"
+    />
+
+    <CabinDecoratorModal
+      :show="showCabin"
+      :unlocked-stickers="effectiveStickers"
+      :placed-stickers="placedStickers"
+      @close="showCabin = false"
+      @toggle-sticker="toggleCabinSticker"
+    />
   </div>
 </template>

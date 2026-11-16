@@ -11,38 +11,45 @@
   h1,
   h2,
   h3 {
-    font-family: 'Fredoka', 'Poppins', system-ui, sans-serif;
+    font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
   }
 
   :focus-visible {
-    outline: 4px solid #fbbf24;
+    outline: 3px solid #38bdf8;
     outline-offset: 3px;
   }
 }
 
 @layer components {
-  .btn-tactile {
-    @apply rounded-3xl font-display font-bold shadow-xl transition-all duration-150 select-none active:translate-y-1 active:shadow-md;
+  .ac-parchment {
+    @apply rounded-[28px] bg-valley-parchment border-4 border-[#E8DEC5] shadow-[0_12px_28px_-10px_rgba(36,48,40,0.18)];
   }
 
-  .card-kid {
-    @apply rounded-3xl bg-white/95 shadow-xl border-4 border-white transition-all duration-200;
+  .ac-btn {
+    @apply rounded-full font-display font-bold shadow-[0_10px_20px_-8px_rgba(30,27,75,0.28)] transition-all duration-150 select-none active:translate-y-1 active:shadow-md;
+  }
+
+  .sleep-glass {
+    @apply rounded-[28px] bg-indigo-950/75 backdrop-blur-md border-2 border-indigo-300/30 shadow-[0_16px_36px_-12px_rgba(15,23,42,0.55)];
   }
 }
 
-/* Custom warm scrollbar */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #e0f4ff;
+  background: #f2ebd9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #a78bfa;
+  background: #74c69d;
   border-radius: 9999px;
-  border: 2px solid #e0f4ff;
+  border: 2px solid #f2ebd9;
 }
 
 @keyframes confetti-fall {
@@ -51,29 +58,29 @@
     opacity: 1;
   }
   100% {
-    transform: translateY(105vh) rotate(540deg);
+    transform: translateY(105vh) rotate(520deg);
     opacity: 0;
   }
 }
 
 .confetti-piece {
-  animation: confetti-fall var(--fall-duration, 3.2s) linear infinite;
+  animation: confetti-fall var(--fall-duration, 3s) linear infinite;
 }
 
 @keyframes shake-gentle {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-8px) rotate(-2deg); }
-  75% { transform: translateX(8px) rotate(2deg); }
+  25% { transform: translateX(-7px) rotate(-1.5deg); }
+  75% { transform: translateX(7px) rotate(1.5deg); }
 }
 
 .animate-shake-gentle {
-  animation: shake-gentle 0.42s ease-in-out;
+  animation: shake-gentle 0.4s ease-in-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
-  .animate-wiggle,
-  .animate-bubble-rise,
+  .animate-sway,
+  .animate-aurora,
   .confetti-piece {
     animation: none !important;
   }

@@ -1,6 +1,6 @@
-# El Campamento de los Sueños ⛺🌟
+# Guardianes del Valle Dormilón 🦉✨
 
-Prototipo web educativo e interactivo hecho con **Vue 3 (`<script setup>`)** y **Tailwind CSS**, dirigido a niños de **5 a 7 años**, sobre el **Derecho a Jugar y Descansar**.
+Videojuego educativo interactivo en **Vue 3 (`<script setup>`)** y **Tailwind CSS**, inspirado en **Pokémon Sleep** y **Animal Crossing**, sobre el **Derecho a la Vida (protección y alimentación), Derecho a Jugar y Derecho a Descansar**.
 
 ## Ejecutar localmente
 
